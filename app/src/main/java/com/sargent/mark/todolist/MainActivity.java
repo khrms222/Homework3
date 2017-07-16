@@ -12,6 +12,8 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 
 
@@ -44,6 +46,12 @@ public class MainActivity extends AppCompatActivity implements AddToDoFragment.O
         });
         rv = (RecyclerView) findViewById(R.id.recyclerView);
         rv.setLayoutManager(new LinearLayoutManager(this));
+
+
+        /*
+        * Use this to delete the database file
+        * */
+        //this.deleteDatabase("items.db");
     }
 
     @Override
@@ -63,8 +71,13 @@ public class MainActivity extends AppCompatActivity implements AddToDoFragment.O
 
         adapter = new ToDoListAdapter(cursor, new ToDoListAdapter.ItemClickListener() {
 
+
+            /*
+            * Now passing in a category argument so the UpdateToDoFragment can display the
+            * correct category when a itemholder is clicked.
+            * */
             @Override
-            public void onItemClick(int pos, String description, String duedate, long id) {
+            public void onItemClick(int pos, String description, String duedate, long id, String category) {
                 Log.d(TAG, "item click id: " + id);
                 String[] dateInfo = duedate.split("-");
                 int year = Integer.parseInt(dateInfo[0].replaceAll("\\s",""));
@@ -73,10 +86,10 @@ public class MainActivity extends AppCompatActivity implements AddToDoFragment.O
 
                 FragmentManager fm = getSupportFragmentManager();
 
-                UpdateToDoFragment frag = UpdateToDoFragment.newInstance(year, month, day, description, id);
+                UpdateToDoFragment frag = UpdateToDoFragment.newInstance(year, month, day, description, id, category);
                 frag.show(fm, "updatetodofragment");
             }
-        });
+        }, db);
 
         rv.setAdapter(adapter);
 
@@ -92,14 +105,18 @@ public class MainActivity extends AppCompatActivity implements AddToDoFragment.O
                 long id = (long) viewHolder.itemView.getTag();
                 Log.d(TAG, "passing id: " + id);
                 removeToDo(db, id);
-                adapter.swapCursor(getAllItems(db));
+                //adapter.swapCursor(getAllItems(db));
             }
         }).attachToRecyclerView(rv);
     }
 
+    /*
+    * Now passing in a category argument so the function closeDialog can add a new category field
+    * to each new item in the database.
+    * */
     @Override
-    public void closeDialog(int year, int month, int day, String description) {
-        addToDo(db, description, formatDate(year, month, day));
+    public void closeDialog(int year, int month, int day, String description, String category) {
+        addToDo(db, description, formatDate(year, month, day), category);
         cursor = getAllItems(db);
         adapter.swapCursor(cursor);
     }
@@ -122,10 +139,16 @@ public class MainActivity extends AppCompatActivity implements AddToDoFragment.O
         );
     }
 
-    private long addToDo(SQLiteDatabase db, String description, String duedate) {
+    /*
+    * Altered database insert to add a category and is_completed field to each item when added
+    * to the database.
+    * */
+    private long addToDo(SQLiteDatabase db, String description, String duedate, String category) {
         ContentValues cv = new ContentValues();
         cv.put(Contract.TABLE_TODO.COLUMN_NAME_DESCRIPTION, description);
         cv.put(Contract.TABLE_TODO.COLUMN_NAME_DUE_DATE, duedate);
+        cv.put(Contract.TABLE_TODO.COLUMN_NAME_CATEGORY, category);
+        cv.put(Contract.TABLE_TODO.COLUMN_NAME_ISCOMPLETED, 0);
         return db.insert(Contract.TABLE_TODO.TABLE_NAME, null, cv);
     }
 
@@ -135,20 +158,90 @@ public class MainActivity extends AppCompatActivity implements AddToDoFragment.O
     }
 
 
-    private int updateToDo(SQLiteDatabase db, int year, int month, int day, String description, long id){
+    /*
+    * Now passing in categoru as an argument when we want to update a todo item...
+    * Altered database update to update the category field if it changed.
+    * */
+    private int updateToDo(SQLiteDatabase db, int year, int month, int day, String description, long id, String category){
 
         String duedate = formatDate(year, month - 1, day);
 
         ContentValues cv = new ContentValues();
         cv.put(Contract.TABLE_TODO.COLUMN_NAME_DESCRIPTION, description);
         cv.put(Contract.TABLE_TODO.COLUMN_NAME_DUE_DATE, duedate);
+        cv.put(Contract.TABLE_TODO.COLUMN_NAME_CATEGORY, category);
 
         return db.update(Contract.TABLE_TODO.TABLE_NAME, cv, Contract.TABLE_TODO._ID + "=" + id, null);
     }
 
+    /*
+    * Now passing in categoru as an argument when we want to update a todo item...
+    * */
     @Override
-    public void closeUpdateDialog(int year, int month, int day, String description, long id) {
-        updateToDo(db, year, month, day, description, id);
+    public void closeUpdateDialog(int year, int month, int day, String description, long id, String category) {
+        updateToDo(db, year, month, day, description, id, category);
         adapter.swapCursor(getAllItems(db));
+    }
+
+    /*
+    * ADDED NEW function to override the onCreateOptionMenu to display the menu item
+    * This menu item will display the filtering options for the todo list based on category
+    * The filters are "All", "Home", "work", "School", "Extra"
+    * */
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.categories, menu);
+        return true;
+    }
+
+    /*
+    * ADDED NEW function to override the onOptionsItemSelected to handle when a menu item
+    * is clicked. Depending on which is clicked we display the correct category.
+    * */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int itemId = item.getItemId();
+
+        if(itemId == R.id.all){
+            cursor = getAllItems(db);
+            adapter.swapCursor(cursor);
+        }
+        else if(itemId == R.id.home){
+            cursor = getSpecificItems(db, "Home");
+            adapter.swapCursor(cursor);
+        }
+        else if(itemId == R.id.work){
+            cursor = getSpecificItems(db, "Work");
+            adapter.swapCursor(cursor);
+        }
+        else if(itemId == R.id.school){
+            cursor = getSpecificItems(db, "School");
+            adapter.swapCursor(cursor);
+        }
+        else if(itemId == R.id.extra){
+            cursor = getSpecificItems(db, "Extra");
+            adapter.swapCursor(cursor);
+        }
+
+        return true;
+    }
+
+    /*
+    * NEW Function to query the database based on a category.
+    * Based on the category selected, the query will find all todoitems in that category and
+    * return them.
+    * */
+    private Cursor getSpecificItems(SQLiteDatabase db, String category) {
+
+        return db.query(
+                Contract.TABLE_TODO.TABLE_NAME,
+                null,
+                "category = '" + category + "'",
+                null,
+                null,
+                null,
+                Contract.TABLE_TODO.COLUMN_NAME_DUE_DATE
+        );
+
     }
 }

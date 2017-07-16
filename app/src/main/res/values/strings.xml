@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">ToDoList</string>
+    <string-array name="category_array">
+        <item>Home</item>
+        <item>Work</item>
+        <item>School</item>
+        <item>Extra</item>
+    </string-array>
 </resources>

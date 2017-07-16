@@ -8,13 +8,24 @@
     android:weightSum="1"
     tools:context=".AddToDoFragment">
 
-    <EditText
-        android:id="@+id/toDo"
-        android:layout_width="match_parent"
-        android:layout_height="0dip"
-        android:layout_weight=".1"
-        android:layout_marginBottom="10dp"
-        android:hint="Enter To Do" />
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <EditText
+            android:id="@+id/toDo"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight=".1"
+            android:layout_marginBottom="10dp"
+            android:hint="Enter To Do" />
+        <android.support.v7.widget.AppCompatSpinner
+            android:id="@+id/categorySpinner"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:entries="@array/category_array">
+        </android.support.v7.widget.AppCompatSpinner>
+    </LinearLayout>
 
     <DatePicker
         android:id="@+id/datePicker"
