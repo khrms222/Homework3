@@ -8,6 +8,10 @@
     android:weightSum="1"
     tools:context=".AddToDoFragment">
 
+    <!--
+        Wrapped the Edittext and Spinner into a LinearLayout
+        Added a Spinner that draws its data from an array of strings definedd in strings.xml
+    -->
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"

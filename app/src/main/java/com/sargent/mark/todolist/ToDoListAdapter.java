@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
 import android.provider.ContactsContract;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -131,11 +132,20 @@ public class ToDoListAdapter extends RecyclerView.Adapter<ToDoListAdapter.ItemHo
             * */
             if(cursor.getInt(cursor.getColumnIndex(Contract.TABLE_TODO.COLUMN_NAME_ISCOMPLETED)) == 1){
                 checkBox.setChecked(true);
+
+                 /*
+                 *   Change the background color of the view to a lime green when completed
+                 * */
+                view.setBackgroundColor(Color.argb(255,163,237,144));
             }
             else{
                 checkBox.setChecked(false);
-            }
 
+                /*
+                *   Change the background color of the view back to white if not completed.
+                * */
+                view.setBackgroundColor(Color.argb(255,255,255,255));
+            }
 
             /*
             * Set a click listener for the checkbox
@@ -147,10 +157,27 @@ public class ToDoListAdapter extends RecyclerView.Adapter<ToDoListAdapter.ItemHo
                 @Override
                 public void onClick(View view) {
                     if(checkBox.isChecked()) {
+
+                        /*
+                        *   Show a toast message when a task is completed.
+                        * */
+                        Toast toast = Toast.makeText(view.getContext(), "Task Completed", Toast.LENGTH_SHORT);
+                        toast.show();
+
                         updateToDoCompleted(true);
+
+                        /*
+                        *   Change the background color of the view to a lime green when completed
+                        * */
+                        ((View)view.getParent()).setBackgroundColor(Color.argb(255,163,237,144));
                     }
                     else{
                         updateToDoCompleted(false);
+
+                        /*
+                        *   Change the background color of the view back to white if not completed.
+                        * */
+                        ((View)view.getParent()).setBackgroundColor(Color.argb(255,255,255,255));
                     }
                 }
             });

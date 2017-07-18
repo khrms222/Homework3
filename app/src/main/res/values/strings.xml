@@ -1,5 +1,9 @@
 <resources>
     <string name="app_name">ToDoList</string>
+
+    <!--
+        An array of strings to populate the spinner for each category.
+    -->
     <string-array name="category_array">
         <item>Home</item>
         <item>Work</item>
